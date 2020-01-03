@@ -30,21 +30,8 @@ enum grubfm_file_type
   ISO,
   DISK,
   VHD,
-  FBA,
-  IMAGE,
   EFI,
-  LUA,
-  TAR,
   WIM,
-  NT5,
-  CFG,
-  FONT,
-  MOD,
-  MBR,
-  NSH,
-  LST,
-  IPXE,
-  PYTHON,
 };
 
 struct grubfm_file_ext
@@ -75,9 +62,9 @@ struct grubfm_enum_file_list
 extern struct grubfm_file_ext grubfm_file_table[];
 /* lib.c */
 int
-grubfm_dir_exist (char *path);
+grubfm_dir_exist (const char *path);
 int
-grubfm_file_exist (char *path);
+grubfm_file_exist (const char *path);
 int
 grubfm_command_exist (const char *str);
 grub_err_t

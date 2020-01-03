@@ -51,43 +51,44 @@ grubfm_find_file (const char *name,
   if ((info->case_insensitive ?
          grub_strcasecmp (name, ctx->name)
        : grub_strcmp (name, ctx->name)) == 0)
-    {
-      ctx->info = *info;
-      ctx->exist = 1;
-      return 1;
-    }
+  {
+    ctx->info = *info;
+    ctx->exist = 1;
+    return 1;
+  }
   return 0;
 }
 
 /* Check if file exists and fetch its information. */
 static void
-grubfm_get_fileinfo (char *path, struct grubfm_test_parse_ctx *ctx)
+grubfm_get_fileinfo (const char *path, struct grubfm_test_parse_ctx *ctx)
 {
   char *pathname;
   char *device_name;
   grub_fs_t fs;
   grub_device_t dev;
+  char *tmp_path = grub_strdup (path);
 
   ctx->exist = 0;
-  device_name = grub_file_get_device_name (path);
+  device_name = grub_file_get_device_name (tmp_path);
   dev = grub_device_open (device_name);
   if (! dev)
-    {
-      grub_free (device_name);
-      return;
-    }
+  {
+    grub_free (device_name);
+    return;
+  }
 
   fs = grub_fs_probe (dev);
   if (! fs)
-    {
-      grub_free (device_name);
-      grub_device_close (dev);
-      return;
-    }
+  {
+    grub_free (device_name);
+    grub_device_close (dev);
+    return;
+  }
 
-  pathname = grub_strchr (path, ')');
+  pathname = grub_strchr (tmp_path, ')');
   if (! pathname)
-    pathname = path;
+    pathname = tmp_path;
   else
     pathname++;
 
@@ -96,37 +97,41 @@ grubfm_get_fileinfo (char *path, struct grubfm_test_parse_ctx *ctx)
     pathname[grub_strlen (pathname) - 1] = 0;
 
   /* Split into path and filename. */
+  char *t;
   ctx->name = grub_strrchr (pathname, '/');
   if (! ctx->name)
-    {
-      path = grub_strdup ("/");
-      ctx->name = pathname;
-    }
+  {
+    t = grub_strdup ("/");
+    ctx->name = pathname;
+  }
   else
-    {
-      ctx->name++;
-      path = grub_strdup (pathname);
-      path[ctx->name - pathname] = 0;
-    }
+  {
+    ctx->name++;
+    t = grub_strdup (pathname);
+    t[ctx->name - pathname] = 0;
+  }
 
   /* It's the whole device. */
   if (! *pathname)
-    {
-      ctx->exist = 1;
-      grub_memset (&ctx->info, 0, sizeof (ctx->info));
-      /* Root is always a directory. */
-      ctx->info.dir = 1;
-    }
+  {
+    ctx->exist = 1;
+    grub_memset (&ctx->info, 0, sizeof (ctx->info));
+    /* Root is always a directory. */
+    ctx->info.dir = 1;
+  }
   else
-    (fs->fs_dir) (dev, path, grubfm_find_file, ctx);
+    (fs->fs_dir) (dev, t, grubfm_find_file, ctx);
 
+  if (t)
+    grub_free (t);
   grub_device_close (dev);
-  grub_free (path);
+  if (tmp_path)
+    grub_free (tmp_path);
   grub_free (device_name);
 }
 
 int
-grubfm_dir_exist (char *path)
+grubfm_dir_exist (const char *path)
 {
   struct grubfm_test_parse_ctx ctx = { .exist = 0};
   grubfm_get_fileinfo (path, &ctx);
@@ -137,7 +142,7 @@ grubfm_dir_exist (char *path)
 }
 
 int
-grubfm_file_exist (char *path)
+grubfm_file_exist (const char *path)
 {
   struct grubfm_test_parse_ctx ctx = { .exist = 0};
   grubfm_get_fileinfo (path, &ctx);
@@ -151,6 +156,8 @@ void
 grubfm_clear_menu (void)
 {
   grub_menu_t menu = grub_env_get_menu();
+  if (!menu)
+    return;
   menu->entry_list = NULL;
   menu->size=0;
 }
