@@ -47,7 +47,7 @@ grubfm_add_menu_parent (const char *dirname)
   else
     src = grub_xasprintf ("grubfm");
 
-  grubfm_add_menu (_("Back"), "go-previous", NULL, src, 0);
+  grubfm_add_menu (_(".."), "back", NULL, src, 0);
   grub_free (src);
   if (parent_dir)
     grub_free (parent_dir);
@@ -74,7 +74,8 @@ grubfm_add_menu_file (struct grubfm_enum_file_info *file, char *pathname)
   src = grub_xasprintf ("grubfm_open \"%s\"", pathname);
   char *icon = NULL;
   icon = grubfm_get_file_type (file);
-  grubfm_add_menu (title, icon, NULL, src, 0);
+  if (file->type != UNKNOWN)
+    grubfm_add_menu (title, icon, NULL, src, 0);
   grub_free (title);
   grub_free (src);
 }

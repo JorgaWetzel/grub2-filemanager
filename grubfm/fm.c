@@ -44,7 +44,7 @@ static grub_err_t
 grub_cmd_grubfm_open (grub_extcmd_context_t ctxt __attribute__ ((unused)),
         int argc, char **args)
 {
-  grubfm_clear_menu ();
+  //grubfm_clear_menu ();
   if (argc != 1)
     return grub_error (GRUB_ERR_BAD_ARGUMENT, N_("bad argument"));
   grubfm_open_file (args[0]);
