@@ -52,6 +52,7 @@ struct grubfm_enum_file_list
 };
 
 extern struct grubfm_ini_enum_list grubfm_ext_table;
+extern ini_t *grubfm_ini_config;
 /* lib.c */
 int
 grubfm_dir_exist (const char *path);

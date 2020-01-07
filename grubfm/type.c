@@ -98,6 +98,14 @@ grubfm_ini_enum (const char *devname)
     }
   }
 
+  /* generic menu */
+  char *ini_name = NULL;
+  ini_name = grub_xasprintf ("(%s)/boot/grub/rules/generic.ini", devname);
+  if (!ini_name)
+    goto fail;
+  grubfm_ini_config = ini_load (ini_name);
+  grub_free (ini_name);
+
  fail:
   if (dev)
     grub_device_close (dev);

@@ -188,7 +188,9 @@ grubfm_enum_file_count (const char *filename,
 {
   struct grubfm_enum_file_list *ctx = data;
 
-  if (grub_strcmp (filename, ".") == 0 || grub_strcmp (filename, "..") == 0)
+  if (grub_strcmp (filename, ".") == 0 ||
+      grub_strcmp (filename, "..") == 0 ||
+      filename[0] == '$')
     return 0;
 
   if (info->dir)
@@ -214,7 +216,9 @@ grubfm_enum_file_iter (const char *filename,
 {
   struct grubfm_enum_file_list *ctx = data;
   char *dirname = ctx->dirname;
-  if (grub_strcmp (filename, ".") == 0 || grub_strcmp (filename, "..") == 0)
+  if (grub_strcmp (filename, ".") == 0 ||
+      grub_strcmp (filename, "..") == 0 ||
+      filename[0] == '$')
     return 0;
   char *pathname;
 

@@ -30,7 +30,7 @@
 
 #include "fm.h"
 
-static const char *num[] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
+ini_t *grubfm_ini_config = NULL;
 
 static void
 grubfm_add_menu_back (const char *filename)
@@ -48,10 +48,51 @@ grubfm_add_menu_back (const char *filename)
     grub_free (dir);
 }
 
+static void
+grubfm_add_ini_menu (char *path, ini_t *ini)
+{
+  int i;
+  char num[4] = "0";
+  for (i = 0; i < 100; i++)
+  {
+    grub_sprintf (num, "%d", i);
+    char *src = NULL;
+    const char *script = NULL;
+    const char *icon = NULL;
+    const char *title = NULL;
+#ifdef GRUB_MACHINE_EFI
+    char platform = 'e';
+#elif defined (GRUB_MACHINE_PCBIOS)
+    char platform = 'b';
+#else
+    char platform = 'u';
+#endif
+    const char *enable = NULL;
+    script = ini_get (ini, num, "menu");
+    if (! script)
+      break;
+    if (ini_get (ini, num, "hidden"))
+      continue;
+    enable = ini_get (ini, num, "enable");
+    if (enable && enable[0] != 'a' && enable[0] != platform)
+      continue;
+    icon = ini_get (ini, num, "icon");
+    if (! icon)
+      icon = "file";
+    title = ini_get (ini, num, "title");
+    if (! title)
+      title = "MENU";
+    src = grub_xasprintf ("export grubfm_file=\"%s\"\n"
+                          "configfile ${prefix}/rules/%s\n", path, script);
+    grubfm_add_menu (_(title), icon, NULL, src, 0);
+    if (src)
+      grub_free (src);
+  }
+}
+
 void
 grubfm_open_file (char *path)
 {
-  int i;
   grubfm_add_menu_back (path);
   struct grubfm_enum_file_info info;
   struct grubfm_ini_enum_list *ctx = &grubfm_ext_table;
@@ -65,40 +106,9 @@ grubfm_open_file (char *path)
                                             GRUB_HUMAN_SIZE_SHORT);
   grubfm_get_file_icon (&info);
 
-  for (i = 0; i < 10; i++)
-  {
-    char *src = NULL;
-    const char *script = NULL;
-    const char *icon = NULL;
-    const char *title = NULL;
-#ifdef GRUB_MACHINE_EFI
-    char platform = 'e';
-#elif defined (GRUB_MACHINE_PCBIOS)
-    char platform = 'b';
-#else
-    char platform = 'u';
-#endif
-    const char *enable = NULL;
-    script = ini_get (ctx->config[info.ext], num[i], "menu");
-    if (! script)
-      break;
-    if (ini_get (ctx->config[info.ext], num[i], "hidden"))
-      continue;
-    enable = ini_get (ctx->config[info.ext], num[i], "enable");
-    if (enable && enable[0] != 'a' && enable[0] != platform)
-      continue;
-    icon = ini_get (ctx->config[info.ext], num[i], "icon");
-    if (! icon)
-      icon = "file";
-    title = ini_get (ctx->config[info.ext], num[i], "title");
-    if (! title)
-      title = "MENU";
-    src = grub_xasprintf ("export grubfm_file=\"%s\"\n"
-                          "configfile ${prefix}/rules/%s\n", path, script);
-    grubfm_add_menu (_(title), icon, NULL, src, 0);
-    if (src)
-      grub_free (src);
-  }
+  grubfm_add_ini_menu (path, ctx->config[info.ext]);
+
+  grubfm_add_ini_menu (path, grubfm_ini_config);
 
   grub_file_close (file);
 }
