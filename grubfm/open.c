@@ -30,67 +30,31 @@
 
 #include "fm.h"
 
-static void
-grubfm_open_win (grub_file_t file, char *path)
-{
-  grub_env_set ("run_file", path);
-  grub_env_export ("run_file");
-  grub_script_execute_sourcecode ("source ${prefix}/install/install.sh");
-}
+static const char *num[] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
 
 static void
-grubfm_open_map (grub_file_t file UNUSED, char *path)
+grubfm_add_menu_back (const char *filename)
 {
+  char *dir = NULL;
   char *src = NULL;
-  src = grub_xasprintf ("map \"%s\"", path);
-  if (!src)
-    return;
-  grub_script_execute_sourcecode (src);
-  grub_free (src);
-}
+  dir = grub_strdup (filename);
+  *grub_strrchr (dir, '/') = 0;
 
-static void
-grubfm_open_efi (grub_file_t file UNUSED, char *path)
-{
-  char *src = NULL;
-  src = grub_xasprintf ("chainloader -b -t \"%s\"", path);
-  if (!src)
-    return;
-  grub_script_execute_sourcecode (src);
-  grub_free (src);
-}
+  src = grub_xasprintf ("grubfm \"%s/\"", dir);
 
-static void
-grubfm_open_vhd (grub_file_t file UNUSED, char *path)
-{
-  char *src = NULL;
-  src = grub_xasprintf ("ntboot --gui"
-                        " --efi=${prefix}/ms/bootmgfw.efi"
-                        " \"%s\"", path);
-  if (!src)
-    return;
-  grub_script_execute_sourcecode (src);
+  grubfm_add_menu (_("Back"), "go-previous", NULL, src, 0);
   grub_free (src);
-}
-
-static void
-grubfm_open_wim (grub_file_t file UNUSED, char *path)
-{
-  char *src = NULL;
-  src = grub_xasprintf ("wimboot @:bootmgfw.efi:${prefix}/ms/bootmgfw.efi"
-                        " @:bcd:${prefix}/ms/bcd"
-                        " @:boot.sdi:${prefix}/ms/boot.sdi"
-                        " @:boot.wim:\"%s\"", path);
-  if (!src)
-    return;
-  grub_script_execute_sourcecode (src);
-  grub_free (src);
+  if (dir)
+    grub_free (dir);
 }
 
 void
 grubfm_open_file (char *path)
 {
+  int i;
+  grubfm_add_menu_back (path);
   struct grubfm_enum_file_info info;
+  struct grubfm_ini_enum_list *ctx = &grubfm_ext_table;
   grub_file_t file = 0;
   file = grub_file_open (path, GRUB_FILE_TYPE_GET_SIZE |
                            GRUB_FILE_TYPE_NO_DECOMPRESS);
@@ -99,27 +63,42 @@ grubfm_open_file (char *path)
   info.name = file->name;
   info.size = (char *) grub_get_human_size (file->size,
                                             GRUB_HUMAN_SIZE_SHORT);
-  grubfm_get_file_type (&info);
-  switch (info.type)
+  grubfm_get_file_icon (&info);
+
+  for (i = 0; i < 10; i++)
   {
-    case ISO:
-      grubfm_open_win (file, path);
-      grubfm_open_map (file, path);
+    char *src = NULL;
+    const char *script = NULL;
+    const char *icon = NULL;
+    const char *title = NULL;
+#ifdef GRUB_MACHINE_EFI
+    char platform = 'e';
+#elif defined (GRUB_MACHINE_PCBIOS)
+    char platform = 'b';
+#else
+    char platform = 'u';
+#endif
+    const char *enable = NULL;
+    script = ini_get (ctx->config[info.ext], num[i], "menu");
+    if (! script)
       break;
-    case DISK:
-      grubfm_open_map (file, path);
-      break;
-    case VHD:
-      grubfm_open_vhd (file, path);
-      break;
-    case EFI:
-      grubfm_open_efi (file, path);
-      break;
-    case WIM:
-      grubfm_open_wim (file, path);
-      break;
-    default:
-      break;
+    if (ini_get (ctx->config[info.ext], num[i], "hidden"))
+      continue;
+    enable = ini_get (ctx->config[info.ext], num[i], "enable");
+    if (enable && enable[0] != 'a' && enable[0] != platform)
+      continue;
+    icon = ini_get (ctx->config[info.ext], num[i], "icon");
+    if (! icon)
+      icon = "file";
+    title = ini_get (ctx->config[info.ext], num[i], "title");
+    if (! title)
+      title = "MENU";
+    src = grub_xasprintf ("export grubfm_file=\"%s\"\n"
+                          "configfile ${prefix}/rules/%s\n", path, script);
+    grubfm_add_menu (_(title), icon, NULL, src, 0);
+    if (src)
+      grub_free (src);
   }
+
   grub_file_close (file);
 }

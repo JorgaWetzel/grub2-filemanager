@@ -22,30 +22,22 @@
 #include <grub/types.h>
 #include <grub/misc.h>
 
-/* file type */
-enum grubfm_file_type
-{
-  UNKNOWN,
-  DIR,
-  ISO,
-  DISK,
-  VHD,
-  EFI,
-  WIM,
-};
+#include <ini.h>
 
-struct grubfm_file_ext
+struct grubfm_ini_enum_list
 {
-  char ext[8];
-  char icon[5];
-  enum grubfm_file_type type;
+  int n;
+  int i;
+  char **ext;
+  char **icon;
+  ini_t **config;
 };
 
 struct grubfm_enum_file_info
 {
   char *name;
   char *size;
-  enum grubfm_file_type type;
+  int ext; /* index */
 };
 
 struct grubfm_enum_file_list
@@ -59,7 +51,7 @@ struct grubfm_enum_file_list
   int d;
 };
 
-extern struct grubfm_file_ext grubfm_file_table[];
+extern struct grubfm_ini_enum_list grubfm_ext_table;
 /* lib.c */
 int
 grubfm_dir_exist (const char *path);
@@ -82,8 +74,10 @@ int
 grubfm_enum_file (char *dirname);
 
 /* type.c */
-char *
-grubfm_get_file_type (struct grubfm_enum_file_info *info);
+void
+grubfm_ini_enum (const char *devname);
+const char *
+grubfm_get_file_icon (struct grubfm_enum_file_info *info);
 
 /* open.c */
 void

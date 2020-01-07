@@ -32,6 +32,8 @@
 #include <grub/device.h>
 #include <grub/file.h>
 
+#include <ini.h>
+
 #include "fm.h"
 
 struct grubfm_test_parse_ctx
@@ -156,8 +158,7 @@ void
 grubfm_clear_menu (void)
 {
   grub_menu_t menu = grub_env_get_menu();
-  if (!menu)
-    return;
+
   menu->entry_list = NULL;
   menu->size=0;
 }

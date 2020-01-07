@@ -28,10 +28,23 @@
 
 GRUB_MOD_LICENSE ("GPLv3+");
 
+static int init = 0;
+
+static void
+grubfm_init (void)
+{
+  if (!init)
+  {
+    grubfm_ini_enum ("memdisk");
+    init = 1;
+  }
+}
+
 static grub_err_t
 grub_cmd_grubfm (grub_extcmd_context_t ctxt __attribute__ ((unused)),
         int argc, char **args)
 {
+  grubfm_init ();
   grubfm_clear_menu ();
   if (argc == 0)
     grubfm_enum_device ();
@@ -44,15 +57,25 @@ static grub_err_t
 grub_cmd_grubfm_open (grub_extcmd_context_t ctxt __attribute__ ((unused)),
         int argc, char **args)
 {
-  //grubfm_clear_menu ();
+  grubfm_init ();
+  grubfm_clear_menu ();
   if (argc != 1)
     return grub_error (GRUB_ERR_BAD_ARGUMENT, N_("bad argument"));
   grubfm_open_file (args[0]);
   return 0;
 }
 
+static grub_err_t
+grub_cmd_grubfm_dbg (grub_extcmd_context_t ctxt __attribute__ ((unused)),
+        int argc __attribute__ ((unused)), char **args __attribute__ ((unused)))
+{
+  grubfm_ini_enum ("memdisk");
+  return 0;
+}
+
 static grub_extcmd_t cmd;
 static grub_extcmd_t cmd_open;
+static grub_extcmd_t cmd_dbg;
 
 GRUB_MOD_INIT(grubfm)
 {
@@ -62,10 +85,13 @@ GRUB_MOD_INIT(grubfm)
   cmd_open = grub_register_extcmd ("grubfm_open", grub_cmd_grubfm_open, 0,
                   N_("PATH"),
                   N_("GRUB file manager."), 0);
+  cmd_dbg = grub_register_extcmd ("grubfm_dbg", grub_cmd_grubfm_dbg, 0, 0,
+                  N_("GRUB file manager."), 0);
 }
 
 GRUB_MOD_FINI(grubfm)
 {
   grub_unregister_extcmd (cmd);
   grub_unregister_extcmd (cmd_open);
+  grub_unregister_extcmd (cmd_dbg);
 }

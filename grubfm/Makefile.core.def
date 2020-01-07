@@ -8,5 +8,7 @@ module = {
   common = contrib/grubfm/type.c;
   common = contrib/grubfm/open.c;
   cflags = '-Wno-unused-parameter';
-  enable = x86_64_efi;
+  cppflags = '-I$(srcdir)/script/ini';
+  enable = efi;
+  enable = i386_pc;
 };
