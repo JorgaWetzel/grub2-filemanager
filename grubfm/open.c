@@ -83,7 +83,8 @@ grubfm_add_ini_menu (char *path, ini_t *ini)
     if (! title)
       title = "MENU";
     src = grub_xasprintf ("export grubfm_file=\"%s\"\n"
-                          "configfile ${prefix}/rules/%s\n", path, script);
+                          "configfile (%s)/boot/grub/rules/%s\n",
+                          path, grubfm_root, script);
     grubfm_add_menu (_(title), icon, NULL, src, 0);
     if (src)
       grub_free (src);
@@ -106,7 +107,8 @@ grubfm_open_file (char *path)
                                             GRUB_HUMAN_SIZE_SHORT);
   grubfm_get_file_icon (&info);
 
-  grubfm_add_ini_menu (path, ctx->config[info.ext]);
+  if (info.ext >= 0)
+    grubfm_add_ini_menu (path, ctx->config[info.ext]);
 
   grubfm_add_ini_menu (path, grubfm_ini_config);
 

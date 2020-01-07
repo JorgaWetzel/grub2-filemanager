@@ -117,14 +117,13 @@ grubfm_get_file_icon (struct grubfm_enum_file_info *info)
   const char *icon = "file";
   if (!info || !info->name)
     goto ret;
-  info->ext = 0;
+  info->ext = -1;
   char *ext = grub_strrchr (info->name, '.');
   if (!ext || *ext == '\0' || *(ext++) == '\0')
     goto ret;
   struct grubfm_ini_enum_list *ctx = &grubfm_ext_table;
   for (ctx->i = 0; ctx->i < ctx->n; ctx->i++)
   {
-    grub_printf ("ext checking %s ", ctx->ext[ctx->i]);
     if (grub_strcasecmp (ext, ctx->ext[ctx->i]) == 0)
     {
       icon = ctx->icon[ctx->i];

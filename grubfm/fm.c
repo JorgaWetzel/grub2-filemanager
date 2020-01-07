@@ -29,13 +29,14 @@
 GRUB_MOD_LICENSE ("GPLv3+");
 
 static int init = 0;
+char grubfm_root[20] = "memdisk";
 
 static void
 grubfm_init (void)
 {
   if (!init)
   {
-    grubfm_ini_enum ("memdisk");
+    grubfm_ini_enum (grubfm_root);
     init = 1;
   }
 }
@@ -65,17 +66,32 @@ grub_cmd_grubfm_open (grub_extcmd_context_t ctxt __attribute__ ((unused)),
   return 0;
 }
 
-static grub_err_t
-grub_cmd_grubfm_dbg (grub_extcmd_context_t ctxt __attribute__ ((unused)),
-        int argc __attribute__ ((unused)), char **args __attribute__ ((unused)))
+static const struct grub_arg_option options_set[] =
 {
-  grubfm_ini_enum ("memdisk");
+  {"root", 'r', 0, N_("root"), 0, 0},
+  {0, 0, 0, 0, 0, 0}
+};
+
+enum options_set
+{
+  FM_SET_ROOT,
+};
+
+static grub_err_t
+grub_cmd_grubfm_set (grub_extcmd_context_t ctxt,
+                     int argc, char **args)
+{
+  struct grub_arg_list *state = ctxt->state;
+  if (state[FM_SET_ROOT].set && argc == 1)
+  {
+    grub_strncpy(grubfm_root, args[0], 19);
+  }
   return 0;
 }
 
 static grub_extcmd_t cmd;
 static grub_extcmd_t cmd_open;
-static grub_extcmd_t cmd_dbg;
+static grub_extcmd_t cmd_set;
 
 GRUB_MOD_INIT(grubfm)
 {
@@ -85,13 +101,15 @@ GRUB_MOD_INIT(grubfm)
   cmd_open = grub_register_extcmd ("grubfm_open", grub_cmd_grubfm_open, 0,
                   N_("PATH"),
                   N_("GRUB file manager."), 0);
-  cmd_dbg = grub_register_extcmd ("grubfm_dbg", grub_cmd_grubfm_dbg, 0, 0,
-                  N_("GRUB file manager."), 0);
+  cmd_set = grub_register_extcmd ("grubfm_set", grub_cmd_grubfm_set, 0,
+                                  N_("--root DEVICE"),
+                                  N_("GRUB file manager."),
+                                  options_set);
 }
 
 GRUB_MOD_FINI(grubfm)
 {
   grub_unregister_extcmd (cmd);
   grub_unregister_extcmd (cmd_open);
-  grub_unregister_extcmd (cmd_dbg);
+  grub_unregister_extcmd (cmd_set);
 }
